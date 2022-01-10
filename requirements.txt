@@ -1,0 +1,8 @@
+mongoengine
+Flask
+marshmallow
+dash
+dash-bootstrap-components
+
+colorlog
+PyYAML

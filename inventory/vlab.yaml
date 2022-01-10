@@ -1,0 +1,20 @@
+_devices_vars_:
+  all:
+    folder: vlab.home
+  default:
+    user:
+      name: jnpr
+      password: Juniper#123
+devices:
+  - name: r1
+    ip: 172.31.8.1
+  - name: r2
+    ip: 172.31.8.2
+  - name: sw1
+    ip: 172.31.8.3
+  - name: sw2
+    ip: 172.31.8.4
+  - name: srx1
+    ip: 172.31.8.5
+  - name: srx2
+    ip: 172.31.8.6

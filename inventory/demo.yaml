@@ -1,0 +1,90 @@
+folders:
+  - name: vlab
+  - name: dc
+    folder: vlab
+  - name: sec
+    folder: vlab
+  - name: dc1
+    folder: vlab.dc
+  - name: dc2
+    folder: vlab.dc
+devices:
+  - name: bb1
+    folder: vlab
+  - name: bb2
+    folder: vlab
+  - name: bb3
+    folder: vlab
+  - name: bb4
+    folder: vlab
+  - name: r1
+    folder: vlab.dc.dc1
+    title: dc1.r1
+  - name: r2
+    folder: vlab.dc.dc1
+    title: dc1.r2
+  - name: sw1
+    folder: vlab.dc.dc1
+    title: dc1.sw1
+  - name: sw2
+    folder: vlab.dc.dc1
+    title: dc1.sw2
+  - name: sw11
+    folder: vlab.dc.dc1
+    title: dc1.sw11
+  - name: sw12
+    folder: vlab.dc.dc1
+    title: dc1.sw12
+  - name: r1
+    folder: vlab.dc.dc2
+    title: dc2.r1
+  - name: r2
+    folder: vlab.dc.dc2
+    title: dc2.r2
+  - name: sw1
+    folder: vlab.dc.dc2
+    title: dc2.sw1
+  - name: sw2
+    folder: vlab.dc.dc2
+    title: dc2.sw2
+  - name: sw11
+    folder: vlab.dc.dc2
+    title: dc2.sw1
+  - name: sw12
+    folder: vlab.dc.dc2
+    title: dc2.sw2
+  - name: srx1
+    folder: vlab.sec
+  - name: srx2
+    folder: vlab.sec
+groups:
+  - name: bb
+    devices:
+      - vlab.bb1
+      - vlab.bb2
+      - vlab.bb3
+      - vlab.bb4
+  - name: pe
+    folder: vlab.dc
+    devices:
+      - vlab.dc.dc1.r1
+      - vlab.dc.dc1.r2
+      - vlab.dc.dc2.r1
+      - vlab.dc.dc2.r2
+  - name: sw
+    folder: vlab.dc
+    devices:
+      - vlab.dc.dc1.sw1
+      - vlab.dc.dc1.sw2
+      - vlab.dc.dc2.sw1
+      - vlab.dc.dc2.sw2
+  - name: sec
+    folder: vlab.dc.dc1
+    devices:
+      - vlab.sec.srx1
+      - vlab.sec.srx2
+  - name: sec
+    folder: vlab.dc.dc2
+    devices:
+      - vlab.sec.srx1
+      - vlab.sec.srx2
