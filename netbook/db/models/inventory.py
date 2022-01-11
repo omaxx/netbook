@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
 
 import mongoengine as me
 
+from ..errors import DoesNotExist, AlreadyExist
 
 SEPARATOR = "."
 
@@ -30,8 +33,6 @@ class Object(me.Document):
         return self.title or self.name
 
     def save(self, *args, **kwargs):
-        if isinstance(self.folder, str):
-            self.folder = Folder.objects.get(path=self.folder)
         if self.folder:
             self.path = self.folder.path + SEPARATOR + self.name
         else:
@@ -60,6 +61,9 @@ class Folder(Object):
     def list_folders(self):
         return Folder.objects(folder=self)
 
+    def list_groups(self):
+        return Group.objects(folder=self)
+
     def list_devices(self):
         return Device.objects(folder=self)
 
@@ -67,6 +71,13 @@ class Folder(Object):
         try:
             kwargs.pop("folder", None)
             return Folder(**kwargs, folder=self).save()
+        except me.NotUniqueError:
+            raise AlreadyExist()
+
+    def create_group(self, **kwargs):
+        try:
+            kwargs.pop("folder", None)
+            return Group(**kwargs, folder=self).save()
         except me.NotUniqueError:
             raise AlreadyExist()
 
@@ -85,6 +96,9 @@ class RootFolder(Folder):
     def list_folders(self):
         return Folder.objects(folder=None)
 
+    def list_groups(self):
+        return Group.objects(folder=None)
+
     def list_devices(self):
         return Device.objects(folder=None)
 
@@ -95,12 +109,31 @@ class RootFolder(Folder):
         except me.NotUniqueError:
             raise AlreadyExist()
 
+    def create_group(self, **kwargs):
+        try:
+            kwargs.pop("folder", None)
+            return Group(**kwargs, folder=None).save()
+        except me.NotUniqueError:
+            raise AlreadyExist()
+
     def create_device(self, **kwargs):
         try:
             kwargs.pop("folder", None)
             return Device(**kwargs, folder=None).save()
         except me.NotUniqueError:
             raise AlreadyExist()
+
+
+class Group(Object):
+    def list_devices(self):
+        return Device.objects(groups__in=[self])
+
+    def add_device(self, device: Device):
+        if self not in device.groups:
+            device.update(push__groups=[self])
+
+    def remove_device(self, device: Device):
+        raise NotImplementedError()
 
 
 class DevicePollStatus(enum.IntEnum):
@@ -135,6 +168,7 @@ class DeviceStateField(me.EmbeddedDocument):
 
 
 class Device(Object):
+    groups = me.ListField()
     poll_status = me.EmbeddedDocumentField(DevicePollStatusField, default=DevicePollStatusField)
     state = me.EmbeddedDocumentField(DeviceStateField, default=DeviceStateField)
 
