@@ -1,9 +1,9 @@
 mongoengine
 Flask
-flask-smorest
 marshmallow
 dash
-dash-bootstrap-components
 
 colorlog
 PyYAML
+
+plotly

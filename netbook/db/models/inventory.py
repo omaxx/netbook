@@ -56,82 +56,50 @@ class Object(me.Document):
 
 
 class Folder(Object):
+    def self(self):
+        return self
+
     def save(self, *args, **kwargs):
         old_path = self.path
         super().save(*args, **kwargs)
         if old_path and old_path != self.path:
-            for obj in Object.objects(folder=self):
+            for obj in Object.objects(folder=self.self()):
                 obj.save()
         return self
 
     def list_folders(self):
-        return Folder.objects(folder=self)
+        return Folder.objects(folder=self.self())
 
     def list_groups(self):
-        return Group.objects(folder=self)
+        return Group.objects(folder=self.self())
 
     def list_devices(self):
-        return Device.objects(folder=self)
+        return Device.objects(folder=self.self())
 
     def create_folder(self, **kwargs):
         try:
             kwargs.pop("folder", None)
-            return Folder(**kwargs, folder=self).save()
+            return Folder(**kwargs, folder=self.self()).save()
         except me.NotUniqueError:
             raise AlreadyExist()
 
     def create_group(self, **kwargs):
         try:
             kwargs.pop("folder", None)
-            return Group(**kwargs, folder=self).save()
+            return Group(**kwargs, folder=self.self()).save()
         except me.NotUniqueError:
             raise AlreadyExist()
 
     def create_device(self, **kwargs):
         try:
             kwargs.pop("folder", None)
-            return Device(**kwargs, folder=self).save()
-        except me.NotUniqueError:
-            raise AlreadyExist()
-
-
-class RootFolder(Folder):
-    def save(self, *args, **kwargs):
-        pass
-
-    def list_folders(self):
-        return Folder.objects(folder=None)
-
-    def list_groups(self):
-        return Group.objects(folder=None)
-
-    def list_devices(self):
-        return Device.objects(folder=None)
-
-    def create_folder(self, **kwargs):
-        try:
-            kwargs.pop("folder", None)
-            return Folder(**kwargs, folder=None).save()
-        except me.NotUniqueError:
-            raise AlreadyExist()
-
-    def create_group(self, **kwargs):
-        try:
-            kwargs.pop("folder", None)
-            return Group(**kwargs, folder=None).save()
-        except me.NotUniqueError:
-            raise AlreadyExist()
-
-    def create_device(self, **kwargs):
-        try:
-            kwargs.pop("folder", None)
-            return Device(**kwargs, folder=None).save()
+            return Device(**kwargs, folder=self.self()).save()
         except me.NotUniqueError:
             raise AlreadyExist()
 
     def count_devices(self, direct_only=False):
         if direct_only:
-            result = list(Device.objects(folder=self).aggregate(count_pipeline))
+            result = list(Device.objects(folder=self.self()).aggregate(count_pipeline))
         else:
             result = list(Device.objects(path__startswith=self.path+".").aggregate(count_pipeline))
         if result:
@@ -140,16 +108,25 @@ class RootFolder(Folder):
             return {field['name']: 0 for field in count_fields}
 
 
+class RootFolder(Folder):
+    def self(self):
+        return None
+
+    def save(self, *args, **kwargs):
+        pass
+
+
 class Group(Object):
     def list_devices(self):
         return Device.objects(groups__in=[self])
 
     def add_device(self, device: Device):
         if self not in device.groups:
-            device.update(push__groups=[self])
+            device.update(push__groups=self)
 
     def remove_device(self, device: Device):
-        raise NotImplementedError()
+        if self in device.groups:
+            device.update(pull__groups=self)
 
     def count_devices(self):
         result = list(Device.objects(groups__in=[self]).aggregate(count_pipeline))

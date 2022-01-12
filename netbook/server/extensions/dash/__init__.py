@@ -28,3 +28,6 @@ def create_app(server, url_prefix=""):
             return users.create_layout(*path)
         else:
             return '404'
+
+    inventory.register_callbacks(app)
+
