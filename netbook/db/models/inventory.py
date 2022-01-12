@@ -48,6 +48,12 @@ class Object(me.Document):
         except me.DoesNotExist:
             raise DoesNotExist(f"{cls.__name__} with path=\"{path}\" not found") from None
 
+    def parents(self):
+        if self.path is None:
+            return []
+        path = self.path.split(SEPARATOR)
+        return [SEPARATOR.join(path[0:i]) for i in range(1, len(path)+1)]
+
 
 class Folder(Object):
     def save(self, *args, **kwargs):
@@ -123,6 +129,16 @@ class RootFolder(Folder):
         except me.NotUniqueError:
             raise AlreadyExist()
 
+    def count_devices(self, direct_only=False):
+        if direct_only:
+            result = list(Device.objects(folder=self).aggregate(count_pipeline))
+        else:
+            result = list(Device.objects(path__startswith=self.path+".").aggregate(count_pipeline))
+        if result:
+            return result[0]
+        else:
+            return {field['name']: 0 for field in count_fields}
+
 
 class Group(Object):
     def list_devices(self):
@@ -134,6 +150,60 @@ class Group(Object):
 
     def remove_device(self, device: Device):
         raise NotImplementedError()
+
+    def count_devices(self):
+        result = list(Device.objects(groups__in=[self]).aggregate(count_pipeline))
+        if result:
+            return result[0]
+        else:
+            return {field['name']: 0 for field in count_fields}
+
+
+count_fields = [
+    {
+        "name": "total",
+        "condition": {}
+    },
+    {
+        "name": "poll_status_ok",
+        "condition": {"$eq": ["$poll_status.value", 'OK']}
+    },
+    {
+        "name": "poll_status_error",
+        "condition": {"$in": ["$poll_status.value", ['CONNECT_ERROR', 'AUTH_ERROR']]}
+    },
+    {
+        "name": "state_normal",
+        "condition": {"$eq": ["$state.value", 'NORMAL']}
+    },
+    {
+        "name": "state_warning",
+        "condition": {"$eq": ["$state.value", 'WARNING']}
+    },
+    {
+        "name": "state_error",
+        "condition": {"$eq": ["$state.value", 'ERROR']}
+    },
+]
+
+
+count_pipeline = [
+    {
+        '$group': {
+            '_id': None,
+            **{
+                field['name']: {
+                    '$sum': {
+                        '$cond': {'if': field['condition'], 'then': 1, 'else': 0}
+                    }
+                }
+                for field in count_fields},
+        },
+    },
+    {
+        '$unset': '_id'
+    },
+]
 
 
 class DevicePollStatus(enum.IntEnum):

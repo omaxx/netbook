@@ -3,9 +3,11 @@ from dash import html
 from dash import dcc
 from dash.dependencies import Input, Output
 
+import dash_bootstrap_components as dbc
+
 
 def create_app(server, url_prefix=""):
-    app = Dash(__name__, server=server, url_base_pathname=url_prefix+"/")
+    app = Dash(__name__, server=server, url_base_pathname=url_prefix+"/", external_stylesheets=[dbc.themes.DARKLY])
     app.layout = html.Div([
         dcc.Location(id='url', refresh=False),
         html.Div(id='page-content')
@@ -20,7 +22,7 @@ def create_app(server, url_prefix=""):
     )
     def display_page(pathname):
         path = pathname.removeprefix(url_prefix).removeprefix("/").split("/")
-        if path[0] == "inventory":
+        if path[0] == inventory.PREFIX:
             return inventory.create_layout(*path)
         elif path[0] == "users":
             return users.create_layout(*path)
