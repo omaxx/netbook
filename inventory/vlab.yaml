@@ -7,14 +7,38 @@ _devices_vars_:
       password: Juniper#123
 devices:
   - name: r1
-    ip: 172.31.8.1
+    vars:
+      ip: 172.31.8.1
+      user:
+        name: jnpr
+        password: Juniper#123
   - name: r2
-    ip: 172.31.8.2
+    vars:
+      ip: 172.31.8.2
+      user:
+        name: jnpr
+        password: Juniper#123
   - name: sw1
-    ip: 172.31.8.3
+    vars:
+      ip: 172.31.8.3
+      user:
+        name: jnpr
+        password: Juniper#123
   - name: sw2
-    ip: 172.31.8.4
+    vars:
+      ip: 172.31.8.4
+      user:
+        name: jnpr
+        password: Juniper#123
   - name: srx1
-    ip: 172.31.8.5
+    vars:
+      ip: 172.31.8.5
+      user:
+        name: jnpr
+        password: Juniper#123
   - name: srx2
-    ip: 172.31.8.6
+    vars:
+      ip: 172.31.8.6
+      user:
+        name: jnpr
+        password: Juniper#123

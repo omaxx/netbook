@@ -5,6 +5,17 @@ import mongoengine as me
 from netbook.logger import logger
 from .inventory import Device
 
+SEVERITIES = [
+    "emergency",
+    "alert",
+    "critical",
+    "error",
+    "warning",
+    "notice",
+    "info",
+    "debug"
+]
+
 
 class Syslog(me.Document):
     device = me.ReferenceField(Device, required=True, reverse_delete_rule=me.CASCADE)
@@ -82,8 +93,9 @@ def get_syslog_aggregate(
         # {"$addFields": {"from": "$_id"}},
         {"$sort": {"_id": 1}},
     ]
-    return Syslog.objects.aggregate(pipeline) or [{"_id": ts_begin, "count": 0}]
+    return list(Syslog.objects.aggregate(pipeline)) or [{"_id": ts_begin, "count": 0}]
 
 
 Device.add_syslog = add_syslog
 Device.add_syslog_list = add_syslog_list
+Device.get_syslog_aggregate = get_syslog_aggregate

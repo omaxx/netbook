@@ -214,10 +214,23 @@ class DeviceStateField(me.EmbeddedDocument):
     last_normal = me.DateTimeField()
 
 
+# class DeviceVars(me.EmbeddedDocument):
+#     ip = me.StringField()
+#
+#
+class DeviceInfo(me.EmbeddedDocument):
+    hostname = me.StringField()
+    model = me.StringField()
+    family = me.StringField()
+
+
 class Device(Object):
     groups = me.ListField()
     poll_status = me.EmbeddedDocumentField(DevicePollStatusField, default=DevicePollStatusField)
     state = me.EmbeddedDocumentField(DeviceStateField, default=DeviceStateField)
+    # vars = me.EmbeddedDocumentField(DeviceVars)
+    vars = me.DictField()
+    info = me.EmbeddedDocumentField(DeviceInfo)
 
     def update_poll_status(self, value, updated=None):
         if updated is None:

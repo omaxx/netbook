@@ -43,7 +43,7 @@ def main(args):
         import_inventory(args.inventory)
     else:
         import_inventory("inventory/demo.yaml")
-        # import_inventory("inventory/vlab.yaml")
+        import_inventory("inventory/vlab.yaml")
 
 
 if __name__ == "__main__":

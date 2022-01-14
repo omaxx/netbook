@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 
 
 from netbook.db import Object, Folder, Group, Device, DoesNotExist
+from netbook.db.models.syslog import SEVERITIES
 
 DASH_PREFIX = "/dash"
 PREFIX = "inventory"
@@ -35,43 +36,63 @@ def create_layout(*path):
 def create_folder_layout(obj):
     return html.Div([
         create_breadcrumb(obj),
-        create_object_table(obj.list_folders(), fields=[
-            {"title": "Total"},
-            {"title": "Poll Status OK"},
-            {"title": "Poll Status ERROR"},
+        html.Div([
+            html.H4("Folders:"),
+            create_object_table(obj.list_folders(), fields=[
+                {"title": "Total"},
+                {"title": "Count (Poll Status == OK)"},
+                {"title": "Count (Poll Status == ERROR)"},
+            ]),
         ]),
-        create_object_table([obj], fields=[
-            {"title": "Total"},
-            {"title": "Poll Status OK"},
-            {"title": "Poll Status ERROR"},
+        html.Div([
+            html.H4("Devices:"),
+            create_object_table([obj], fields=[
+                {"title": "Total"},
+                {"title": "Count (Poll Status == OK)"},
+                {"title": "Count (Poll Status == ERROR)"},
+            ]),
+            create_object_table(obj.list_devices(), fields=[
+                {"title": "IP", "value": "vars.ip"},
+                {"title": "Hostname", "value": "info.hostname"},
+                {"title": "Family", "value": "info.family"},
+                {"title": "Model", "value": "info.model"},
+                {"title": "Poll Status", "value": "poll_status.value"},
+                {"title": "Poll Status Updated", "value": "poll_status.updated"},
+                {"title": "Last OK Poll Status", "value": "poll_status.last_ok"},
+                {"title": "State", "value": "state.value"},
+                {"title": "State Updated", "value": "state.updated"},
+                {"title": "Last Normal State", "value": "state.last_normal"},
+            ]),
         ]),
-        create_object_table(obj.list_devices(), fields=[
-            {"title": "Poll Status", "value": "poll_status.value"},
-            {"title": "Poll Status Updated", "value": "poll_status.updated"},
-            {"title": "Last OK Poll Status", "value": "poll_status.last_ok"},
-            {"title": "State", "value": "state.value"},
-            {"title": "State Updated", "value": "state.updated"},
-            {"title": "Last Normal State", "value": "state.last_normal"},
+        html.Div([
+            html.H4("Groups:"),
+            create_object_table(obj.list_groups()),
         ]),
-        create_object_table(obj.list_groups()),
     ])
 
 
 def create_group_layout(obj):
     return html.Div([
         create_breadcrumb(obj),
-        create_object_table([obj], fields=[
-            {"title": "Total"},
-            {"title": "Poll Status OK"},
-            {"title": "Poll Status ERROR"},
-        ]),
-        create_object_table(obj.list_devices(), fields=[
-            {"title": "Poll Status", "value": "poll_status.value"},
-            {"title": "Poll Status Updated", "value": "poll_status.updated"},
-            {"title": "Last OK Poll Status", "value": "poll_status.last_ok"},
-            {"title": "State", "value": "state.value"},
-            {"title": "State Updated", "value": "state.updated"},
-            {"title": "Last Normal State", "value": "state.last_normal"},
+        html.Div([
+            html.H4("Devices:"),
+            create_object_table([obj], fields=[
+                {"title": "Total"},
+                {"title": "Count (Poll Status == OK)"},
+                {"title": "Count (Poll Status == ERROR)"},
+            ]),
+            create_object_table(obj.list_devices(), fields=[
+                {"title": "IP", "value": "vars.ip"},
+                {"title": "Hostname", "value": "info.hostname"},
+                {"title": "Family", "value": "info.family"},
+                {"title": "Model", "value": "info.model"},
+                {"title": "Poll Status", "value": "poll_status.value"},
+                {"title": "Poll Status Updated", "value": "poll_status.updated"},
+                {"title": "Last OK Poll Status", "value": "poll_status.last_ok"},
+                {"title": "State", "value": "state.value"},
+                {"title": "State Updated", "value": "state.updated"},
+                {"title": "Last Normal State", "value": "state.last_normal"},
+            ]),
         ]),
     ])
 
@@ -79,7 +100,7 @@ def create_group_layout(obj):
 def create_device_layout(obj):
     return html.Div([
         create_breadcrumb(obj),
-        html.H3(obj.name, style={'text-align': 'center'}),
+        html.H3(obj.name, title=obj.path, style={'text-align': 'center'}, id='device-path'),
         dcc.DatePickerRange(
             id='date-picker',
             start_date=date.today(),
@@ -133,24 +154,59 @@ def create_object_link(obj):
 def get_object_value(obj, field):
     # FIXME:
     value = field.get("value", "").split(".")
-    if len(value) == 2:
+    try:
         return obj[value[0]][value[1]]
-    else:
+    except:
         return ""
+
+
+SEVERITY_COLOR = [
+    "violet",
+    "lightpink",
+    "red",
+    "orange",
+    "yellow",
+    "cyan",
+    "green",
+    "blue"
+]
 
 
 def register_callbacks(app):
     @app.callback(
         Output('bar-graph', 'figure'),
         [
-            Input('url', 'pathname'),
+            Input('device-path', 'title'),
             Input('date-picker', 'start_date'),
             Input('date-picker', 'end_date'),
         ]
     )
-    def create_bar_graph(pathname, start_date, end_date):
+    def create_bar_graph(path, start_date, end_date):
         fig = go.Figure()
         ts_begin = datetime.fromisoformat(start_date)
         ts_end = datetime.fromisoformat(end_date)
+        if ts_end - ts_begin > timedelta(days=1):
+            aggregate_time = 60
+        else:
+            aggregate_time = 15
+        device = Device.get(path)
+        for severity in range(8):
+            events = device.get_syslog_aggregate(
+                ts_begin=ts_begin,
+                ts_end=ts_end,
+                aggregate_time=aggregate_time,
+                match={"severity_level": severity}
+            )
+            fig.add_trace(
+                # go.Scatter(
+                go.Bar(
+                    x=[event["_id"] for event in events],
+                    y=[event["count"] for event in events],
+                    legendgroup="syslog",
+                    name=SEVERITIES[severity],
+                    marker={'color': SEVERITY_COLOR[severity]}
+                )
+            )
+
         fig.update_layout(xaxis_range=(ts_begin, ts_end), barmode="stack")
         return fig
