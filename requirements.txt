@@ -1,5 +1,6 @@
 mongoengine
-Flask
+flask
+flask_smorest
 marshmallow
 dash
 
@@ -7,3 +8,5 @@ colorlog
 PyYAML
 
 plotly
+
+python-dotenv
