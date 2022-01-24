@@ -3,6 +3,7 @@ flask
 flask_smorest
 marshmallow
 dash
+dash_bootstrap_components
 
 colorlog
 PyYAML
