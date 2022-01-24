@@ -6,7 +6,7 @@ mongoengine
 marshmallow
 
 flask
-flask_smorest
+flask-smorest
 dash
-dash_bootstrap_components
+dash-bootstrap-components
 plotly
