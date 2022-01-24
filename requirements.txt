@@ -1,13 +1,12 @@
-mongoengine
-flask
-flask_smorest
-marshmallow
-dash
-dash_bootstrap_components
-
+python-dotenv
 colorlog
 PyYAML
 
-plotly
+mongoengine
+marshmallow
 
-python-dotenv
+flask
+flask_smorest
+dash
+dash_bootstrap_components
+plotly
