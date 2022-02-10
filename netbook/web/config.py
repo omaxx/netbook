@@ -1,3 +1,9 @@
+import os
+import dotenv
+
+dotenv.load_dotenv()
+
+
 class BaseConfig:
     API_TITLE = "NetBook API"
     API_VERSION = "v1"
@@ -14,3 +20,15 @@ class BaseConfig:
     OPENAPI_SWAGGER_UI_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     OPENAPI_RAPIDOC_PATH = "/rapidoc"
     OPENAPI_RAPIDOC_URL = "https://unpkg.com/rapidoc/dist/rapidoc-min.js"
+
+
+settings = {
+    "db": {
+        "mongo": {
+            "host": os.environ.get("PG_DB_MONGO_HOST"),
+            "dbe": os.environ.get("PG_DB_MONGO_DB"),
+            "username": os.environ.get("PG_DB_MONGO_USERNAME"),
+            "password": os.environ.get("PG_DB_MONGO_PASSWORD"),
+        }
+    }
+}

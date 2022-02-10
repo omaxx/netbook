@@ -5,7 +5,7 @@ from datetime import datetime
 
 import mongoengine as me
 
-from ..errors import DoesNotExist, AlreadyExist
+from netbook.db.errors import DoesNotExist, AlreadyExist
 
 SEPARATOR = "."
 

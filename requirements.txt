@@ -1,12 +1,14 @@
-python-dotenv
+dynaconf
 colorlog
-PyYAML < 6
 
 mongoengine
+flask
 marshmallow
 
-flask
-flask-smorest
 dash
-dash-bootstrap-components
 plotly
+
+PyYAML
+
+Werkzeug
+python-dotenv

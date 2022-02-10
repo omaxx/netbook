@@ -6,8 +6,9 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
 
-from netbook.db import Object, Folder, Group, Device, DoesNotExist
-from netbook.db.models.syslog import SEVERITIES
+from netbook.db import Object, Folder, Group, Device
+from netbook.db.errors import DoesNotExist
+from netbook.db.mongo.models.syslog import SEVERITIES
 
 DASH_PREFIX = "/dash"
 PREFIX = "inventory"

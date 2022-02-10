@@ -1,7 +1,10 @@
 from flask import Flask
 
+import netbook
+
 
 def create_app():
+    settings = netbook.init()
     from .config import BaseConfig
 
     app = Flask(__name__)
@@ -9,10 +12,20 @@ def create_app():
 
     from . import routes
 
-    register_blueprints(app)
     register_extensions(app)
+    register_blueprints(app)
 
     return app
+
+
+def register_extensions(app):
+    from .extensions import login
+    from .extensions import api
+    from .extensions import dash
+
+    login.create_app(app)
+    api.create_app(app, url_prefix='/api')
+    dash.create_app(app, url_prefix='/dash')
 
 
 def register_blueprints(app):
@@ -23,9 +36,3 @@ def register_blueprints(app):
     app.register_blueprint(users.bp, url_prefix='/users')
 
 
-def register_extensions(app):
-    from .extensions import api
-    from .extensions import dash
-
-    api.create_app(app, url_prefix='/api')
-    dash.create_app(app, url_prefix='/dash')

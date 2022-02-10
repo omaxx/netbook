@@ -1,9 +1,11 @@
+import logging
 from datetime import datetime
 
 import mongoengine as me
 
-from netbook.logger import logger
 from .inventory import Device
+
+logger = logging.getLogger(__name__)
 
 SEVERITIES = [
     "emergency",

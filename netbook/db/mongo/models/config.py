@@ -1,7 +1,10 @@
+import logging
+
 import mongoengine as me
 
-from netbook.logger import logger
 from .inventory import Device
+
+logger = logging.getLogger(__name__)
 
 
 class Config(me.Document):
