@@ -2,11 +2,11 @@ import logging
 import colorlog
 
 
-def init(**settings):
+def init(level='INFO'):
     logger = logging.getLogger(__name__.split(".")[0])
 
-    logger.setLevel("DEBUG")
-    setup_stderr_logger(logger, "DEBUG")
+    logger.setLevel(level)
+    setup_stderr_logger(logger, level)
 
     return logger
 

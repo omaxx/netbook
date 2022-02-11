@@ -1,12 +1,19 @@
+import logging
+
 import mongoengine as me
 
+logger = logging.getLogger(__name__)
 
-def connect(**kwargs):
+
+def connect(db=None, host=None, username=None, password=None):
+    db = db or __name__.split('.')[0]
+    host = host or 'localhost'
+    logger.info(f"mongo: connect to {db} on {host}")
     me.connect(
-        host=kwargs.get('host'),
-        db=kwargs.get('db', __name__.split(".")[0]),
-        username=kwargs.get('username'),
-        password=kwargs.get('password'),
+        host=host,
+        db=db,
+        username=username,
+        password=password,
         authentication_source='admin',
     )
 

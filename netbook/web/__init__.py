@@ -10,7 +10,8 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(BaseConfig)
 
-    from . import routes
+    with app.app_context():
+        from . import routes
 
     register_extensions(app)
     register_blueprints(app)

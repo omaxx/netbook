@@ -8,7 +8,7 @@ marshmallow
 dash
 plotly
 
-PyYAML
+PyYAML < 6
 
 Werkzeug
-python-dotenv
+WTForms
