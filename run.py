@@ -2,4 +2,9 @@
 
 from netbook.web import create_app
 
-create_app().run()
+app = create_app()
+app.run(
+    host=app.config.get("HOST", "127.0.0.1"),
+    port=app.config.get("PORT", 5000),
+    load_dotenv=False,
+)

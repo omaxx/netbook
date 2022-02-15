@@ -27,7 +27,7 @@ def create_app(server, url_prefix=""):
     )
     def display_page(pathname):
         if not flask_login.current_user.is_authenticated:
-            return "403"
+            return html.A("please login", href="/login")
         path = pathname.removeprefix(url_prefix).removeprefix("/").split("/")
         if path[0] == inventory.PREFIX:
             return inventory.create_layout(*path)

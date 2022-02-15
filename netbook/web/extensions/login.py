@@ -10,6 +10,9 @@ def create_app(server):
 
     @login.user_loader
     def load_user(idx):
-        return db.User.get(id=idx)
+        try:
+            return db.User.get(id=idx)
+        except db.errors.DoesNotExist:
+            return None
 
     return login

@@ -9,6 +9,7 @@ def create_app():
 
     app = Flask(__name__)
     app.config.from_object(BaseConfig)
+    app.config.update(settings['web'])
 
     with app.app_context():
         from . import routes
@@ -35,5 +36,3 @@ def register_blueprints(app):
 
     app.register_blueprint(inventory.bp, url_prefix='/inventory')
     app.register_blueprint(users.bp, url_prefix='/users')
-
-

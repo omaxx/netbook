@@ -49,18 +49,18 @@ class Object(me.Document):
             create: bool = False,
             **kwargs,
             ):
-        if path is not None:
+        if path not in [None, ""]:
             if name is not None:
-                raise TypeError("Please specify path OR name")
+                raise TypeError("Please specify path OR name, not both")
             else:
                 path = folder + SEPARATOR + path if folder is not None else path
         else:
             if name is None:
+                if cls in [Object, Folder]:
+                    return RootFolder()
                 raise TypeError("Please specify path OR name")
             else:
                 path = folder + SEPARATOR + name if folder is not None else name
-        if cls in [Object, Folder] and path in [None, ""]:
-            return RootFolder()
         try:
             return cls.objects.get(path=path)
         except me.DoesNotExist:
@@ -214,7 +214,7 @@ count_pipeline = [
 ]
 
 
-class DevicePollStatus(enum.IntEnum):
+class DeviceStatus(enum.IntEnum):
     CREATED = 1
     DISABLED = 2
     ARCHIVED = 3
@@ -223,67 +223,89 @@ class DevicePollStatus(enum.IntEnum):
     AUTH_ERROR = -2
 
 
-class DeviceState(enum.IntEnum):
-    UNKNOWN = 1
-    NORMAL = 0
-    WARNING = -1
-    ERROR = -2
-    CRITICAL = -3
-
-
-class DevicePollStatusField(me.EmbeddedDocument):
+# class DeviceState(enum.IntEnum):
+#     UNKNOWN = 1
+#     NORMAL = 0
+#     WARNING = -1
+#     ERROR = -2
+#     CRITICAL = -3
+#
+#
+class DeviceStatusField(me.EmbeddedDocument):
     # value = me.EnumField(DeviceStatus, default=DeviceStatus.CREATED)
-    value = me.StringField(default="CREATED", choices=[status.name for status in DevicePollStatus])
+    value = me.StringField(default="CREATED", choices=[status.name for status in DeviceStatus])
     updated = me.DateTimeField(default=datetime.utcnow)
     last_ok = me.DateTimeField()
 
 
-class DeviceStateField(me.EmbeddedDocument):
-    # value = me.EnumField(DeviceState, default=DeviceState.UNKNOWN)
-    value = me.StringField(default="UNKNOWN", choices=[state.name for state in DeviceState])
-    updated = me.DateTimeField(default=datetime.utcnow)
-    last_normal = me.DateTimeField()
-
-
+# class DeviceStateField(me.EmbeddedDocument):
+#     # value = me.EnumField(DeviceState, default=DeviceState.UNKNOWN)
+#     value = me.StringField(default="UNKNOWN", choices=[state.name for state in DeviceState])
+#     updated = me.DateTimeField(default=datetime.utcnow)
+#     last_normal = me.DateTimeField()
+#
+#
 # class DeviceVars(me.EmbeddedDocument):
 #     ip = me.StringField()
 #
 #
-class DeviceInfo(me.EmbeddedDocument):
-    hostname = me.StringField()
-    model = me.StringField()
-    family = me.StringField()
-
-
 class Device(Object):
     groups = me.ListField()
-    poll_status = me.EmbeddedDocumentField(DevicePollStatusField, default=DevicePollStatusField)
-    state = me.EmbeddedDocumentField(DeviceStateField, default=DeviceStateField)
+    status = me.EmbeddedDocumentField(DeviceStatusField, default=DeviceStatusField)
+    # state = me.EmbeddedDocumentField(DeviceStateField, default=DeviceStateField)
     # vars = me.EmbeddedDocumentField(DeviceVars)
     vars = me.DictField()
-    info = me.EmbeddedDocumentField(DeviceInfo)
+    facts = me.DictField()
 
-    def update_poll_status(self, value, updated=None):
+    def update_status(self, value, updated=None):
         if updated is None:
             updated = datetime.utcnow()
-        if updated < self.poll_status.updated:
+        if updated < self.status.updated:
             return False
-        self.poll_status.value = value
-        self.poll_status.updated = updated
+        self.status.value = value
+        self.status.updated = updated
         if updated == "OK":
-            self.poll_status.last_ok = updated
+            self.status.last_ok = updated
         self.save()
         return True
 
-    def update_state(self, value, updated=None):
-        if updated is None:
-            updated = datetime.utcnow()
-        if updated < self.state.updated:
-            return False
-        self.state.value = value
-        self.state.updated = updated
-        if value == "NORMAL":
-            self.state.last_normal = updated
+    # def update_state(self, value, updated=None):
+    #     if updated is None:
+    #         updated = datetime.utcnow()
+    #     if updated < self.state.updated:
+    #         return False
+    #     self.state.value = value
+    #     self.state.updated = updated
+    #     if value == "NORMAL":
+    #         self.state.last_normal = updated
+    #     self.save()
+    #     return True
+    #
+    def set_fact(self, name, value, ts=None):
+        self.facts[name] = value
         self.save()
-        return True
+        DeviceFact(device=self, name=name, value=value, ts=ts).save()
+        return self
 
+    def get_fact(self, name, ts=None):
+        if ts is None:
+            first = DeviceFact.objects(device=self, name=name).order_by('-ts').first()
+        else:
+            first = DeviceFact.objects(device=self, name=name, ts__lte=ts).order_by('-ts').first()
+        if first is not None:
+            return first.value
+        else:
+            return None
+
+
+class DeviceFact(me.Document):
+    device = me.ReferenceField(Device, required=True, reverse_delete_rule=me.CASCADE)
+    name = me.StringField(required=True)
+    value = me.DynamicField()
+    ts = me.DateTimeField(default=datetime.utcnow)
+    hash = me.StringField(primary_key=True)
+
+    def save(self, **kwargs):
+        if self.hash is None:
+            self.hash = f"{self.device.path}/{self.name}/{self.ts}"
+        super().save(**kwargs)

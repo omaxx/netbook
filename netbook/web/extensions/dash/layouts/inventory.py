@@ -13,6 +13,25 @@ from netbook.db.mongo.models.syslog import SEVERITIES
 DASH_PREFIX = "/dash"
 PREFIX = "inventory"
 
+DEVICE_FIELDS = [
+    {"title": "IP", "value": "vars.ip"},
+    {"title": "Hostname", "value": "facts.system.hostname"},
+    {"title": "Family", "value": "facts.system.sw.family"},
+    {"title": "Model", "value": "facts.system.hw.model"},
+    {"title": "Status", "value": "status.value"},
+    {"title": "Status Updated", "value": "status.updated"},
+    {"title": "Last OK Status", "value": "status.last_ok"},
+    # {"title": "State", "value": "state.value"},
+    # {"title": "State Updated", "value": "state.updated"},
+    # {"title": "Last Normal State", "value": "state.last_normal"},
+]
+
+DEVICE_SUMMARY_FIELDS = [
+    {"title": "Total"},
+    {"title": "Count (Status == OK)"},
+    {"title": "Count (Status == ERROR)"},
+]
+
 
 def create_layout(*path):
     try:
@@ -39,31 +58,12 @@ def create_folder_layout(obj):
         create_breadcrumb(obj),
         html.Div([
             html.H4("Folders:"),
-            create_object_table(obj.list_folders(), fields=[
-                {"title": "Total"},
-                {"title": "Count (Poll Status == OK)"},
-                {"title": "Count (Poll Status == ERROR)"},
-            ]),
+            create_object_table(obj.list_folders(), fields=DEVICE_SUMMARY_FIELDS),
         ]),
         html.Div([
             html.H4("Devices:"),
-            create_object_table([obj], fields=[
-                {"title": "Total"},
-                {"title": "Count (Poll Status == OK)"},
-                {"title": "Count (Poll Status == ERROR)"},
-            ]),
-            create_object_table(obj.list_devices(), fields=[
-                {"title": "IP", "value": "vars.ip"},
-                {"title": "Hostname", "value": "info.hostname"},
-                {"title": "Family", "value": "info.family"},
-                {"title": "Model", "value": "info.model"},
-                {"title": "Poll Status", "value": "poll_status.value"},
-                {"title": "Poll Status Updated", "value": "poll_status.updated"},
-                {"title": "Last OK Poll Status", "value": "poll_status.last_ok"},
-                {"title": "State", "value": "state.value"},
-                {"title": "State Updated", "value": "state.updated"},
-                {"title": "Last Normal State", "value": "state.last_normal"},
-            ]),
+            create_object_table([obj], fields=DEVICE_SUMMARY_FIELDS),
+            create_object_table(obj.list_devices(), fields=DEVICE_FIELDS),
         ]),
         html.Div([
             html.H4("Groups:"),
@@ -77,23 +77,8 @@ def create_group_layout(obj):
         create_breadcrumb(obj),
         html.Div([
             html.H4("Devices:"),
-            create_object_table([obj], fields=[
-                {"title": "Total"},
-                {"title": "Count (Poll Status == OK)"},
-                {"title": "Count (Poll Status == ERROR)"},
-            ]),
-            create_object_table(obj.list_devices(), fields=[
-                {"title": "IP", "value": "vars.ip"},
-                {"title": "Hostname", "value": "info.hostname"},
-                {"title": "Family", "value": "info.family"},
-                {"title": "Model", "value": "info.model"},
-                {"title": "Poll Status", "value": "poll_status.value"},
-                {"title": "Poll Status Updated", "value": "poll_status.updated"},
-                {"title": "Last OK Poll Status", "value": "poll_status.last_ok"},
-                {"title": "State", "value": "state.value"},
-                {"title": "State Updated", "value": "state.updated"},
-                {"title": "Last Normal State", "value": "state.last_normal"},
-            ]),
+            create_object_table([obj], fields=DEVICE_SUMMARY_FIELDS),
+            create_object_table(obj.list_devices(), fields=DEVICE_FIELDS),
         ]),
     ])
 
@@ -156,9 +141,18 @@ def get_object_value(obj, field):
     # FIXME:
     value = field.get("value", "").split(".")
     try:
-        return obj[value[0]][value[1]]
+        return to_string(obj[value[0]][value[1]])
     except:
-        return ""
+        return f"@{value}"
+
+
+def to_string(value):
+    if isinstance(value, str):
+        return value
+    elif value is None:
+        return "NO DATA"
+    else:
+        return str(value)
 
 
 SEVERITY_COLOR = [
