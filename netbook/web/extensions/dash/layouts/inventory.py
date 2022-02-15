@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 from netbook.db import Object, Folder, Group, Device
 from netbook.db.errors import DoesNotExist
 from netbook.db.mongo.models.syslog import SEVERITIES
+from netbook.utils import s_get
 
 DASH_PREFIX = "/dash"
 PREFIX = "inventory"
@@ -138,12 +139,10 @@ def create_object_link(obj):
 
 
 def get_object_value(obj, field):
-    # FIXME:
-    value = field.get("value", "").split(".")
     try:
-        return to_string(obj[value[0]][value[1]])
-    except:
-        return f"@{value}"
+        return to_string(s_get(obj, field.get("value", "").split(".")))
+    except Exception as err:
+        return f"{err}"
 
 
 def to_string(value):
