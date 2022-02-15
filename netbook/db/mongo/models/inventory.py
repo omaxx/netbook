@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 
 import enum
 from datetime import datetime
@@ -8,6 +9,7 @@ import mongoengine as me
 from netbook.db.errors import DoesNotExist, AlreadyExist
 
 SEPARATOR = "."
+logger = logging.getLogger(__name__)
 
 
 class Object(me.Document):
@@ -40,13 +42,42 @@ class Object(me.Document):
         return super().save(*args, **kwargs)
 
     @classmethod
-    def get(cls, path=None):
-        if cls in [Object, Folder] and path is None:
+    def get(cls,
+            path: str = None,
+            name: str = None,
+            folder: str = None,
+            create: bool = False,
+            **kwargs,
+            ):
+        if path is not None:
+            if name is not None:
+                raise TypeError("Please specify path OR name")
+            else:
+                path = folder + SEPARATOR + path if folder is not None else path
+        else:
+            if name is None:
+                raise TypeError("Please specify path OR name")
+            else:
+                path = folder + SEPARATOR + name if folder is not None else name
+        if cls in [Object, Folder] and path in [None, ""]:
             return RootFolder()
         try:
             return cls.objects.get(path=path)
         except me.DoesNotExist:
-            raise DoesNotExist(f"{cls.__name__} with path=\"{path}\" not found") from None
+            logger.debug(f"db: {cls.__name__} with path={path} not found")
+            if not create:
+                raise DoesNotExist(f"{cls.__name__} with path=\"{path}\" not found") from None
+            else:
+                folder_path = SEPARATOR.join(path.split(SEPARATOR)[:-1])
+                object_name = SEPARATOR.join(path.split(SEPARATOR)[-1:])
+                logger.debug(f"db: going to create {cls.__name__}(name={object_name}) in Folder(path={folder_path})")
+                obj = cls(
+                    name=object_name,
+                    folder=Folder.get(path=folder_path, create=True).self(),
+                    **kwargs,
+                ).save()
+                logger.info(f"db: {cls.__name__} {object_name} was created in folder {folder_path}")
+                return obj
 
     def parents(self):
         if self.path is None:
