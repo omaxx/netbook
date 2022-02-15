@@ -3,9 +3,14 @@ colorlog
 
 mongoengine
 flask
+flask-login
+flask-wtf
+flask-smorest
+
 marshmallow
 
 dash
+dash-bootstrap-components
 plotly
 
 PyYAML < 6
